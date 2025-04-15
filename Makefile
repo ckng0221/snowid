@@ -1,7 +1,7 @@
 test_all: test_unit test_build_basic test_build_server
 
 test_unit:
-	go test .
+	go test ./...
 
 # Test examples
 test_build_basic:

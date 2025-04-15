@@ -1,3 +1,5 @@
+[![CI](https://github.com/ckng0221/snowid/actions/workflows/ci.yml/badge.svg)](https://github.com/ckng0221/snowid/actions/workflows/ci.yml)
+
 # SnowID - Distributed Unique ID Generator
 
 SnowID is module that generates 64-bit unique ID in a distributed system based on Twitter Snowflake ID.
