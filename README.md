@@ -1,6 +1,6 @@
-# Distributed Unique ID Generator
+# SnowID - Distributed Unique ID Generator
 
-A POC of gnerating 64-bit unique ID in a distributed system.
+SnowID is module that generates 64-bit unique ID in a distributed system based on Twitter Snowflake ID.
 The generated ID is unique, sortable, and can be generated distributedly without single point of failure.
 The ID is generated in binary string, and convert to decimal integer string
 
@@ -10,48 +10,59 @@ Structure of ID:
 |Bit|1|41|5|5|12|
 
 - 0: Placeholder, could indicate the sign, remain for future use.
-- timestamp: unix timestamp in milliseconds. Have custom epoch of 1704067200000 (starting from 2024-01-01T00:00.000Z). 41 bit could have total of 2^41 = 2.2 Trillion milliseconds ~= 69.8 years. Max date could reach year 2093.
+- timestamp: unix timestamp in milliseconds. The default epoch is on 2025-01-01T00:00.000Z. 41 bit could have total of 2^41 = 2.2 Trillion milliseconds ~= 69.8 years. Max date could reach year 2095.
 - dataCenterID: max 32 data center
 - machineId: max 32 machine (nodes) in 1 data center
 - sequenceNUmber: max 4096 sequence number per millisecond
 
 Example generated ID:
+(DataCenterID: 13, MachineID: 14, Epoch: DefaultEpoch)
 
-- Binary: `0110010001000010101011010010000010000001000110111110000000000110`
-- Decimal: `7224527107372343302`
+- Binary: `0000001001011101101101111111111110100010010110101110000000000000`
+- Decimal: `170494669478354944`
 
 ## Getting started
 
-### Prerequisites
+### Installation
 
-Gin requires [Go](https://go.dev/) version [1.24](https://go.dev/doc/devel/release#go1.24.0) or above.
-
-### Getting module
-
-With [Go's module support](https://go.dev/wiki/Modules#how-to-use-modules), `go [build|run|test]` automatically fetches the necessary dependencies when you add the import in your code:
-
-```sh
-import "github.com/ckng0221/distributed-unique-id-generator"
+```bash
+go get github.com/ckng0221/snowid
 ```
 
-### Running module
-
-A basic example:
+### Quickstart
 
 ```go
 package main
 
 import (
-  "github.com/ckng0221/distributed-unique-id-generator"
+	"fmt"
+
+	"github.com/ckng0221/snowid"
 )
 
 func main() {
-  r := gin.Default()
-  r.GET("/ping", func(c *gin.Context) {
-    c.JSON(http.StatusOK, gin.H{
-      "message": "pong",
-    })
-  })
-  r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	dataCenterId := 1            // 0 to 31
+	machineId := 1               // 0 to 31
+	epoch := snowid.DefaultEpoch // Default epoch 2025-01-01T00:00.000Z
+	s, err := snowid.NewSnowIdGenerator(dataCenterId, machineId, epoch)
+	if err != nil {
+		panic(err)
+	}
+	id1 := s.GenerateId()
+	id2 := s.GenerateId()
+
+	// ID 1
+	fmt.Printf("ID: %s\n", id1.String())                // output, eg. 37866498659848192
+	fmt.Printf("ID (Binary): %s\n", id1.StringBinary()) // output, eg. 0000000010000110100001110110000101000001100000100001000000000000
+	fmt.Printf("Sequence: %d\n", id1.SequenceNumber)    // sequence 0
+	// ID 2
+	fmt.Printf("ID: %s\n", id2.String())                // outpuot, eg. 37866498659848193
+	fmt.Printf("ID (Binary): %s\n", id2.StringBinary()) // output, eg. 0000000010000110100001110110000101000001100000100001000000000001
+	fmt.Printf("Sequence: %d\n", id2.SequenceNumber)    // sequence 1
+
+	// Parse ID
+	id1Copy := id1.String()
+	reverseParseId1, _ := snowid.ParseId(id1Copy, snowid.DefaultEpoch)
+	fmt.Printf("ID: %s\n", reverseParseId1.String()) // same id as ID 1 after parsing, ie. 37866498659848192
 }
 ```

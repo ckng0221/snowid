@@ -7,29 +7,27 @@ import (
 )
 
 func main() {
-	dataCenterId := 1
-	machineId := 1
-	g, err := snowid.NewSnowIdGenerator(dataCenterId, machineId, snowid.DefaultEpoch)
+	dataCenterId := 1            // 0 to 31
+	machineId := 1               // 0 to 31
+	epoch := snowid.DefaultEpoch // Default epoch 2025-01-01T00:00.000Z
+	s, err := snowid.NewSnowIdGenerator(dataCenterId, machineId, epoch)
 	if err != nil {
 		panic(err)
 	}
-	id1 := g.GenerateId()
-	id2 := g.GenerateId()
-	id4 := g.GenerateId()
-	fmt.Println(id4)
+	id1 := s.GenerateId()
+	id2 := s.GenerateId()
 
 	// ID 1
-	fmt.Printf("ID: %s\n", id1.String())
-	fmt.Printf("ID (Binary): %s\n", id1.StringBinary())
-	fmt.Printf("Sequence: %d\n", id1.SequenceNumber)
+	fmt.Printf("ID: %s\n", id1.String())                // output, eg. 37866498659848192
+	fmt.Printf("ID (Binary): %s\n", id1.StringBinary()) // output, eg. 0000000010000110100001110110000101000001100000100001000000000000
+	fmt.Printf("Sequence: %d\n", id1.SequenceNumber)    // sequence 0
 	// ID 2
-	fmt.Printf("ID: %s\n", id2.String())
-	fmt.Printf("ID (Binary): %s\n", id2.StringBinary())
-	fmt.Printf("Sequence: %d\n", id2.SequenceNumber)
+	fmt.Printf("ID: %s\n", id2.String())                // outpuot, eg. 37866498659848193
+	fmt.Printf("ID (Binary): %s\n", id2.StringBinary()) // output, eg. 0000000010000110100001110110000101000001100000100001000000000001
+	fmt.Printf("Sequence: %d\n", id2.SequenceNumber)    // sequence 1
 
 	// Parse ID
 	id1Copy := id1.String()
-	fmt.Println(id1Copy)
-	id3, _ := snowid.ParseId(id1Copy, snowid.DefaultEpoch)
-	fmt.Printf("ID: %s\n", id3.String())
+	reverseParseId1, _ := snowid.ParseId(id1Copy, snowid.DefaultEpoch)
+	fmt.Printf("ID: %s\n", reverseParseId1.String()) // same id as ID 1 after parsing, ie. 37866498659848192
 }

@@ -18,7 +18,7 @@ import (
 // use 2024-01-01 UTC as the starting epoch, instead of unix epoch
 // max until year 2093
 var (
-	DefaultEpoch = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	DefaultEpoch = time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 )
 
 type SnowIdGenerator struct {
@@ -177,7 +177,7 @@ func ParseIdBinary(id string, customEpoch time.Time) (*ID, error) {
 func ParseId(id string, customEpoch time.Time) (*ID, error) {
 	id_int, err := strconv.Atoi(id)
 	if err != nil {
-		return nil, errors.New("invalid id format")
+		return nil, errors.New("the id is not a number")
 	}
 
 	id_bin := fmt.Sprintf("%064b", id_int)
