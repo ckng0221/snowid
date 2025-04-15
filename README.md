@@ -66,3 +66,9 @@ func main() {
 	fmt.Printf("ID: %s\n", reverseParseId1.String()) // same id as ID 1 after parsing, ie. 37866498659848192
 }
 ```
+
+## Contributing
+
+We welcome your contribution!
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on submitting patches and the contribution workflow.
