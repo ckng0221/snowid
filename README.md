@@ -1,4 +1,5 @@
 [![CI](https://github.com/ckng0221/snowid/actions/workflows/ci.yml/badge.svg)](https://github.com/ckng0221/snowid/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/ckng0221/snowid.svg)](https://pkg.go.dev/github.com/ckng0221/snowid)
 
 # SnowID - Distributed Unique ID Generator
 
