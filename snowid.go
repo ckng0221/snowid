@@ -86,8 +86,9 @@ func NewSnowIdGenerator(dataCenterId, machineId int, epoch time.Time) (*SnowIdGe
 // Return error if the sequence number is equal to or greater than the max
 // sequence in 1 milisecond
 func (s *SnowIdGenerator) GenerateId() (*SnowID, error) {
-	currentTimestamp := int(time.Since(s.Epoch).Milliseconds())
-	return s.generateId(int64(currentTimestamp))
+	currentTimestamp := time.Since(s.Epoch).Milliseconds()
+
+	return s.generateId(currentTimestamp)
 }
 
 // Generate ID with timestamp input
