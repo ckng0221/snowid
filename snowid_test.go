@@ -225,7 +225,7 @@ func TestGenerateExceedSequenceLimitIdCountWithSleep(t *testing.T) {
 		}
 		ids = append(ids, id)
 	}
-	time.Sleep(1 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 	for range SEQUENCE_CAP {
 		id, err := s.GenerateId()
 		if err != nil {
