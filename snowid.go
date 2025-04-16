@@ -17,19 +17,38 @@ import (
 // 41 bit timestamp in miliseconds, can have max around 69years
 // use 2025-01-01 UTC as the starting epoch, instead of unix epoch
 // max until year 2095
+
+const (
+	SIGN_BIT       = 1
+	TIMESTAMP_BIT  = 41
+	DATACENTER_BIT = 5
+	MACHINE_BIT    = 5
+	SEQUENCE_BIT   = 12
+
+	DEFAULT_SIGN_BIT = "0"
+
+	DATACENTER_CAP = (1 << DATACENTER_BIT) // 32
+	MACHINE_CAP    = (1 << MACHINE_BIT)    // 32
+	SEQUENCE_CAP   = (1 << SEQUENCE_BIT)   // 4096
+
+	MAX_DATACENTER_ID = DATACENTER_CAP - 1 // 31
+	MAX_MACHINE_ID    = MACHINE_CAP - 1    // 31
+	MAX_SEQUENCE_ID   = SEQUENCE_CAP - 1   // 4095
+)
+
 var (
 	DefaultEpoch = time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 )
 
 type SnowIdGenerator struct {
 	l            sync.RWMutex
-	Records      map[int]int
+	Records      map[int64]int
 	DataCenterId int8
 	MachineId    int8
 	Epoch        time.Time
 }
 
-type ID struct {
+type SnowID struct {
 	Timestamp      int64     `json:"timestamp"`
 	DataCenterId   int8      `json:"datacenter_id"`
 	MachineId      int8      `json:"machine_id"`
@@ -54,7 +73,7 @@ func NewSnowIdGenerator(dataCenterId, machineId int, epoch time.Time) (*SnowIdGe
 	}
 
 	s := &SnowIdGenerator{
-		Records:      make(map[int]int, 2),
+		Records:      make(map[int64]int),
 		DataCenterId: int8(dataCenterId),
 		MachineId:    int8(machineId),
 		Epoch:        epoch,
@@ -62,32 +81,41 @@ func NewSnowIdGenerator(dataCenterId, machineId int, epoch time.Time) (*SnowIdGe
 	return s, nil
 }
 
-func (s *SnowIdGenerator) GenerateId() *ID {
+// Generate Snowflake ID object
+//
+// Return error if the sequence number is equal to or greater than the max
+// sequence in 1 milisecond
+func (s *SnowIdGenerator) GenerateId() (*SnowID, error) {
 	currentTimestamp := int(time.Since(s.Epoch).Milliseconds())
+	return s.generateId(int64(currentTimestamp))
+}
 
-	id := &ID{
-		Timestamp:    int64(currentTimestamp),
+// Generate ID with timestamp input
+func (s *SnowIdGenerator) generateId(timestamp int64) (*SnowID, error) {
+	id := &SnowID{
+		Timestamp:    timestamp,
 		DataCenterId: s.DataCenterId,
 		MachineId:    s.MachineId,
 		Epoch:        s.Epoch,
 	}
 	s.l.RLock()
-	count, ok := s.Records[currentTimestamp]
+	count, ok := s.Records[timestamp]
 	s.l.RUnlock()
+	s.l.Lock()
+	defer s.l.Unlock()
 	if ok {
-		s.l.Lock()
-		defer s.l.Unlock()
 		count++
+		if count >= MAX_SEQUENCE_ID {
+			return nil, errors.New("sequence number greater than max limit")
+		}
 
-		s.Records[currentTimestamp] = count
+		s.Records[timestamp] = count
 		id.SequenceNumber = int16(count)
-		return id
+		return id, nil
 	} else {
-		s.l.Lock()
-		defer s.l.Unlock()
 		// sequence starts from 0
-		s.Records[currentTimestamp] = 0
-		return id
+		s.Records[timestamp] = 0
+		return id, nil
 	}
 }
 
@@ -101,7 +129,7 @@ func (s *SnowIdGenerator) AutoResetRecords(duration time.Duration) {
 		ticker := time.NewTicker(duration)
 		for range ticker.C {
 			s.l.Lock()
-			s.Records = make(map[int]int)
+			s.Records = make(map[int64]int)
 			s.l.Unlock()
 		}
 	}
@@ -111,28 +139,27 @@ func (s *SnowIdGenerator) AutoResetRecords(duration time.Duration) {
 // Reset all hashtable records
 func (s *SnowIdGenerator) ResetRecords() {
 	s.l.Lock()
-	s.Records = make(map[int]int)
+	s.Records = make(map[int64]int)
 	s.l.Unlock()
 }
 
 // Return binary string
-func (id *ID) StringBinary() string {
-	initialBit := "0"
+func (id *SnowID) StringBinary() string {
 
 	timestamp_bin := fmt.Sprintf("%041b", id.Timestamp)
 	dataCenterId_bin := fmt.Sprintf("%05b", id.DataCenterId)
 	machineId_bin := fmt.Sprintf("%05b", id.MachineId)
 	sequenceNumber_bin := fmt.Sprintf("%012b", id.SequenceNumber)
 
-	return fmt.Sprintf("%s%s%s%s%s", initialBit, timestamp_bin, dataCenterId_bin, machineId_bin, sequenceNumber_bin)
+	return fmt.Sprintf("%s%s%s%s%s", DEFAULT_SIGN_BIT, timestamp_bin, dataCenterId_bin, machineId_bin, sequenceNumber_bin)
 }
 
-func (id *ID) String() string {
+func (id *SnowID) String() string {
 	id_int, _ := strconv.ParseInt(id.StringBinary(), 2, 64)
 	return fmt.Sprint(id_int)
 }
 
-func (id *ID) Datetime() time.Time {
+func (id *SnowID) Datetime() time.Time {
 	unixEpoch := time.Unix(0, 0).UTC()
 
 	return time.UnixMilli(id.Timestamp + id.Epoch.UnixMilli() - unixEpoch.UnixMilli()).UTC()
@@ -141,7 +168,7 @@ func (id *ID) Datetime() time.Time {
 // Parse ID in decimal string
 //
 // eg. ParseId("0000001001011100001100001111001101011110100000100001000000000000")
-func ParseIdBinary(id string, customEpoch time.Time) (*ID, error) {
+func ParseIdBinary(id string, customEpoch time.Time) (*SnowID, error) {
 	if len(id) != 64 {
 		return nil, errors.New("invalid ID length. The ID should be 64 bits binary string")
 	}
@@ -169,7 +196,7 @@ func ParseIdBinary(id string, customEpoch time.Time) (*ID, error) {
 		return nil, errors.New("sequence number should be a number")
 	}
 
-	idObj := &ID{
+	idObj := &SnowID{
 		Timestamp:      timestamp_int,
 		DataCenterId:   int8(datacenterId_int),
 		MachineId:      int8(machineId_int),
@@ -183,7 +210,7 @@ func ParseIdBinary(id string, customEpoch time.Time) (*ID, error) {
 // Parse ID in decimal string
 //
 // eg. ParseId("170064707754004481")
-func ParseId(id string, customEpoch time.Time) (*ID, error) {
+func ParseId(id string, customEpoch time.Time) (*SnowID, error) {
 	id_int, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, errors.New("the id is not a number")

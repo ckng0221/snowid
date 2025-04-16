@@ -14,8 +14,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	id1 := s.GenerateId()
-	id2 := s.GenerateId()
+	id1, err := s.GenerateId()
+	if err != nil {
+		panic(err)
+	}
+	id2, err := s.GenerateId()
+	if err != nil {
+		panic(err)
+	}
 
 	// ID 1
 	fmt.Printf("ID: %s\n", id1.String())                // output, eg. 37866498659848192
