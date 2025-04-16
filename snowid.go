@@ -8,11 +8,10 @@ import (
 	"time"
 )
 
-// Unique ID generator based on Twitter Snowflake
+// Unique 64-bit ID generator based on Twitter Snowflake
 // ID generator
 // |0|timestamp|datacenterID|machineID|sequenceNumber
 // |1|41|5|5|12| bits
-// maximum 4096 sequence
 
 // 41 bit timestamp in miliseconds, can have max around 69years
 // use 2025-01-01 UTC as the starting epoch, instead of unix epoch
@@ -24,6 +23,7 @@ const (
 	DATACENTER_BIT = 5
 	MACHINE_BIT    = 5
 	SEQUENCE_BIT   = 12
+	TOTAL_BIT      = SIGN_BIT + TIMESTAMP_BIT + DATACENTER_BIT + MACHINE_BIT + SEQUENCE_BIT
 
 	DEFAULT_SIGN_BIT = "0"
 
@@ -62,7 +62,7 @@ type SnowID struct {
 //
 // machineId. min 0, max 31
 //
-// epoch: The epoch time to start generating IDs. Could use idg.DefaultEpoch
+// epoch: The epoch time to start generating IDs. Could use the DefaultEpoch
 func NewSnowIdGenerator(dataCenterId, machineId int, epoch time.Time) (*SnowIdGenerator, error) {
 	// validation
 	if dataCenterId < 0 || dataCenterId > 31 {
@@ -122,7 +122,7 @@ func (s *SnowIdGenerator) generateId(timestamp int64) (*SnowID, error) {
 // AutoResetRecords will reset the records every n seconds
 //
 // Runs a goroutine that resets the records every n seconds.
-// This is useful on server, to avoid build up of records.
+// This is useful to avoid build up of records.
 func (s *SnowIdGenerator) AutoResetRecords(duration time.Duration) {
 	resetRecordsOnSchedule := func() {
 		// clean up every n second
@@ -145,7 +145,6 @@ func (s *SnowIdGenerator) ResetRecords() {
 
 // Return binary string
 func (id *SnowID) StringBinary() string {
-
 	timestamp_bin := fmt.Sprintf("%041b", id.Timestamp)
 	dataCenterId_bin := fmt.Sprintf("%05b", id.DataCenterId)
 	machineId_bin := fmt.Sprintf("%05b", id.MachineId)
@@ -170,13 +169,18 @@ func (id *SnowID) Datetime() time.Time {
 // eg. ParseId("0000001001011100001100001111001101011110100000100001000000000000")
 func ParseIdBinary(id string, customEpoch time.Time) (*SnowID, error) {
 	if len(id) != 64 {
-		return nil, errors.New("invalid ID length. The ID should be 64 bits binary string")
+		return nil, errors.New("invalid ID length. The ID should be 64-bit binary string")
 	}
 	// get binary string
-	timestamp := id[1 : 1+41]
-	datacenterId := id[42 : 42+5]
-	machineId := id[47 : 47+5]
-	sequenceNumber := id[52 : 52+12]
+	timestamp_start := 0 + SIGN_BIT
+	datacenter_start := timestamp_start + TIMESTAMP_BIT
+	machine_start := datacenter_start + DATACENTER_BIT
+	sequence_start := machine_start + MACHINE_BIT
+
+	timestamp := id[timestamp_start:datacenter_start]
+	datacenterId := id[datacenter_start:machine_start]
+	machineId := id[machine_start:sequence_start]
+	sequenceNumber := id[sequence_start:]
 
 	// convert to integer
 	timestamp_int, err := strconv.ParseInt(timestamp, 2, 64)

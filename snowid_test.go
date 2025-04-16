@@ -206,7 +206,15 @@ func TestGenerateExceedSequenceLimitIdCountWithSleep(t *testing.T) {
 		id, _ := s.GenerateId()
 		ids = append(ids, id)
 	}
+	// check total
 	if len(ids) != 2*SEQUENCE_CAP {
 		t.Errorf("Expected quantity %d, got %d", 2*SEQUENCE_CAP, len(ids))
 	}
+
+	// check length
+	last := ids[len(ids)-1]
+	if len(last.StringBinary()) > TOTAL_BIT {
+		t.Errorf("Expected length %d, got %d", TOTAL_BIT, len(last.StringBinary()))
+	}
+
 }
