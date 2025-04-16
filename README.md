@@ -14,9 +14,9 @@ Structure of ID:
 
 - 0: Placeholder, could indicate the sign, remain for future use.
 - timestamp: unix timestamp in milliseconds. The default epoch is on 2025-01-01T00:00.000Z. 41 bit could have total of 2^41 = 2.2 Trillion milliseconds ~= 69.8 years. Max date could reach year 2095.
-- dataCenterID: max 32 data center
-- machineId: max 32 machine (nodes) in 1 data center
-- sequenceNUmber: max 4096 sequence number per millisecond
+- dataCenterID: 5 bits, max 32 data center (0 - 31)
+- machineId: 5 bits, max 32 machine (nodes) in 1 data center (0 - 31)
+- sequenceNUmber: 12 bits, max 4096 sequence number per millisecond (0 - 4095)
 
 Example generated ID:
 (DataCenterID: 13, MachineID: 14, Epoch: DefaultEpoch)
@@ -51,8 +51,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	id1 := s.GenerateId()
-	id2 := s.GenerateId()
+	id1, err := s.GenerateId()
+	if err != nil {
+		panic(err)
+	}
+	id2, err := s.GenerateId()
+	if err != nil {
+		panic(err)
+	}
 
 	// ID 1
 	fmt.Printf("ID: %s\n", id1.String())                // output, eg. 37866498659848192

@@ -44,8 +44,18 @@ func main() {
 	})
 
 	http.HandleFunc("POST /ids", func(w http.ResponseWriter, r *http.Request) {
-		id := s.GenerateId()
-		log.Println("id", id.String())
+		id, err := s.GenerateId()
+		if err != nil {
+			log.Print(err.Error())
+			errMsg := "Internal server error"
+			res := map[string]any{
+				"status": 500,
+				"error":  errMsg,
+			}
+			json.NewEncoder(w).Encode(res)
+			return
+		}
+		log.Println("ID", id.String())
 		w.Header().Set("Content-Type", "application/json")
 		res := map[string]any{
 			"status": 200,
