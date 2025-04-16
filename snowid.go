@@ -65,10 +65,10 @@ type SnowID struct {
 // epoch: The epoch time to start generating IDs. Could use the DefaultEpoch
 func NewSnowIdGenerator(dataCenterId, machineId int, epoch time.Time) (*SnowIdGenerator, error) {
 	// validation
-	if dataCenterId < 0 || dataCenterId > 31 {
+	if dataCenterId < 0 || dataCenterId > MAX_DATACENTER_ID {
 		return nil, errors.New("datacenterId must be between 0 and 31")
 	}
-	if machineId < 0 || machineId > 31 {
+	if machineId < 0 || machineId > MAX_MACHINE_ID {
 		return nil, errors.New("machineId must be between 0 and 31")
 	}
 
@@ -169,7 +169,7 @@ func (id *SnowID) Datetime() time.Time {
 //
 // eg. ParseId("0000001001011100001100001111001101011110100000100001000000000000")
 func ParseIdBinary(id string, customEpoch time.Time) (*SnowID, error) {
-	if len(id) != 64 {
+	if len(id) != TOTAL_BIT {
 		return nil, errors.New("invalid ID length. The ID should be 64-bit binary string")
 	}
 	// get binary string
@@ -222,7 +222,7 @@ func ParseId(id string, customEpoch time.Time) (*SnowID, error) {
 	}
 
 	id_bin := fmt.Sprintf("%064b", id_int)
-	if len(id_bin) != 64 {
+	if len(id_bin) != TOTAL_BIT {
 		return nil, errors.New("invalid id length")
 	}
 	idObj, err := ParseIdBinary(id_bin, customEpoch)
