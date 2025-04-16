@@ -3,7 +3,7 @@
 
 # SnowID - Distributed Unique ID Generator
 
-SnowID is module that generates 64-bit unique ID in a distributed system based on Twitter Snowflake ID.
+SnowID is Go module that generates 64-bit unique ID in a distributed system based on Twitter Snowflake ID.
 The generated ID is unique, sortable, and can be generated distributedly without single point of failure.
 The ID is generated in binary string, and convert to decimal integer string
 
