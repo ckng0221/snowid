@@ -142,7 +142,7 @@ func (s *SnowIdGenerator) ResetRecords() {
 	s.l.Unlock()
 }
 
-// Return binary string
+// Return binary string of ID
 func (id *SnowID) StringBinary() string {
 	timestamp_bin := fmt.Sprintf("%041b", id.Timestamp)
 	dataCenterId_bin := fmt.Sprintf("%05b", id.DataCenterId)
@@ -152,9 +152,15 @@ func (id *SnowID) StringBinary() string {
 	return fmt.Sprintf("%s%s%s%s%s", DEFAULT_PLACEHOLDER_BIT, timestamp_bin, dataCenterId_bin, machineId_bin, sequenceNumber_bin)
 }
 
-func (id *SnowID) String() string {
+// return decimal integer of ID
+func (id *SnowID) Int64() int64 {
 	id_int, _ := strconv.ParseInt(id.StringBinary(), 2, 64)
-	return fmt.Sprint(id_int)
+	return id_int
+}
+
+// Return decimal string of ID
+func (id *SnowID) String() string {
+	return strconv.FormatInt(id.Int64(), 10)
 }
 
 func (id *SnowID) Datetime() time.Time {
