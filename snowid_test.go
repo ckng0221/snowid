@@ -17,8 +17,13 @@ func TestCustomEpochDateTimeDefaultEpoch(t *testing.T) {
 	s, err := NewSnowIdGenerator(machineId, dataCenterId, DefaultEpoch)
 	if err != nil {
 		t.Error(err.Error())
+		return
 	}
-	id, _ := s.GenerateId()
+	id, err := s.GenerateId()
+	if err != nil {
+		t.Errorf("Failed to generate ID: %s", err.Error())
+		return
+	}
 	id_date := id.Datetime().UTC().String()[:10]
 	expectedDate := time.Now().UTC().String()[:10]
 
@@ -33,8 +38,13 @@ func TestCustomEpochDateTimeEarlierEpoch(t *testing.T) {
 	s, err := NewSnowIdGenerator(machineId, dataCenterId, earlierEpoch)
 	if err != nil {
 		t.Error(err.Error())
+		return
 	}
-	id, _ := s.GenerateId()
+	id, err := s.GenerateId()
+	if err != nil {
+		t.Errorf("Failed to generate ID: %s", err.Error())
+		return
+	}
 	id_date := id.Datetime().UTC().String()[:10]
 	expectedDate := time.Now().UTC().String()[:10]
 
@@ -50,7 +60,11 @@ func TestCustomEpochDateTimeUnixEpoch(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	}
-	id, _ := s.GenerateId()
+	id, err := s.GenerateId()
+	if err != nil {
+		t.Errorf("Failed to generate ID: %s", err.Error())
+		return
+	}
 	id_date := id.Datetime().UTC().String()[:10]
 	expectedDate := time.Now().UTC().String()[:10]
 
@@ -183,7 +197,11 @@ func TestGenerateMany(t *testing.T) {
 	qty := 1000
 	ids := []*SnowID{}
 	for range qty {
-		id, _ := s.GenerateId()
+		id, err := s.GenerateId()
+		if err != nil {
+			t.Errorf("Failed to generate ID: %s", err.Error())
+			return
+		}
 		ids = append(ids, id)
 	}
 	if len(ids) != qty {
@@ -211,9 +229,12 @@ func TestGenerateExceedSequenceLimitIdCount(t *testing.T) {
 		t.Errorf("Expected quantity %d, got %d", SEQUENCE_CAP, len(ids))
 	}
 
-	_, err = s.generateId(timestamp)
+	id, err := s.generateId(timestamp)
 	if err == nil {
 		t.Errorf("Expected to throw error when exceeding sequence max")
+	}
+	if id != nil {
+		t.Errorf("Expect ID to be nil")
 	}
 }
 
