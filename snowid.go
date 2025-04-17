@@ -18,14 +18,14 @@ import (
 // max until year 2095
 
 const (
-	SIGN_BIT       = 1
-	TIMESTAMP_BIT  = 41
-	DATACENTER_BIT = 5
-	MACHINE_BIT    = 5
-	SEQUENCE_BIT   = 12
-	TOTAL_BIT      = SIGN_BIT + TIMESTAMP_BIT + DATACENTER_BIT + MACHINE_BIT + SEQUENCE_BIT
+	PLACEHOLDER_BIT = 1
+	TIMESTAMP_BIT   = 41
+	DATACENTER_BIT  = 5
+	MACHINE_BIT     = 5
+	SEQUENCE_BIT    = 12
+	TOTAL_BIT       = PLACEHOLDER_BIT + TIMESTAMP_BIT + DATACENTER_BIT + MACHINE_BIT + SEQUENCE_BIT // 64
 
-	DEFAULT_SIGN_BIT = "0"
+	DEFAULT_PLACEHOLDER_BIT = "0"
 
 	DATACENTER_CAP = (1 << DATACENTER_BIT) // 32
 	MACHINE_CAP    = (1 << MACHINE_BIT)    // 32
@@ -99,14 +99,12 @@ func (s *SnowIdGenerator) generateId(timestamp int64) (*SnowID, error) {
 		MachineId:    s.MachineId,
 		Epoch:        s.Epoch,
 	}
-	s.l.RLock()
-	count, ok := s.Records[timestamp]
-	s.l.RUnlock()
 	s.l.Lock()
 	defer s.l.Unlock()
+	count, ok := s.Records[timestamp]
 	if ok {
 		count++
-		if count >= MAX_SEQUENCE_ID {
+		if count > MAX_SEQUENCE_ID {
 			return nil, errors.New("sequence number greater than max limit")
 		}
 
@@ -151,7 +149,7 @@ func (id *SnowID) StringBinary() string {
 	machineId_bin := fmt.Sprintf("%05b", id.MachineId)
 	sequenceNumber_bin := fmt.Sprintf("%012b", id.SequenceNumber)
 
-	return fmt.Sprintf("%s%s%s%s%s", DEFAULT_SIGN_BIT, timestamp_bin, dataCenterId_bin, machineId_bin, sequenceNumber_bin)
+	return fmt.Sprintf("%s%s%s%s%s", DEFAULT_PLACEHOLDER_BIT, timestamp_bin, dataCenterId_bin, machineId_bin, sequenceNumber_bin)
 }
 
 func (id *SnowID) String() string {
@@ -173,7 +171,7 @@ func ParseIdBinary(id string, customEpoch time.Time) (*SnowID, error) {
 		return nil, errors.New("invalid ID length. The ID should be 64-bit binary string")
 	}
 	// get binary string
-	timestamp_start := 0 + SIGN_BIT
+	timestamp_start := 0 + PLACEHOLDER_BIT
 	datacenter_start := timestamp_start + TIMESTAMP_BIT
 	machine_start := datacenter_start + DATACENTER_BIT
 	sequence_start := machine_start + MACHINE_BIT

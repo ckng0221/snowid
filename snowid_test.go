@@ -199,7 +199,12 @@ func TestGenerateExceedSequenceLimitIdCount(t *testing.T) {
 	ids := []*SnowID{}
 	timestamp := time.Now().UnixMilli()
 	for range SEQUENCE_CAP {
-		id, _ := s.generateId(timestamp)
+		id, err := s.generateId(timestamp)
+		if err != nil {
+			t.Errorf("Failed to generate ID: %s", err.Error())
+			return
+		}
+
 		ids = append(ids, id)
 	}
 	if len(ids) != SEQUENCE_CAP {
