@@ -40,42 +40,42 @@ var (
 	DefaultEpoch = time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 )
 
-type SnowIdGenerator struct {
+type SnowIDGenerator struct {
 	l            sync.RWMutex
 	Records      map[int64]int
-	DataCenterId int8
-	MachineId    int8
+	DataCenterID int8
+	MachineID    int8
 	Epoch        time.Time
 }
 
 type SnowID struct {
 	Timestamp      int64     `json:"timestamp"`
-	DataCenterId   int8      `json:"datacenter_id"`
-	MachineId      int8      `json:"machine_id"`
+	DataCenterID   int8      `json:"datacenter_id"`
+	MachineID      int8      `json:"machine_id"`
 	SequenceNumber int16     `json:"sequence_number"`
 	Epoch          time.Time `json:"epoch"`
 }
 
 // Initialize the ID Generator
 //
-// dataCenterId. min 0, max 31
+// dataCenterID. min 0, max 31
 //
-// machineId. min 0, max 31
+// machineID. min 0, max 31
 //
-// epoch: The epoch time to start generating IDs. Could use the DefaultEpoch
-func NewSnowIdGenerator(dataCenterId, machineId int, epoch time.Time) (*SnowIdGenerator, error) {
+// epoch: The epoch time to start generating IDs. Could use the DefaultEpoch.
+func NewSnowIDGenerator(dataCenterID, machineID int, epoch time.Time) (*SnowIDGenerator, error) {
 	// validation
-	if dataCenterId < 0 || dataCenterId > MAX_DATACENTER_ID {
-		return nil, errors.New("datacenterId must be between 0 and 31")
+	if dataCenterID < 0 || dataCenterID > MAX_DATACENTER_ID {
+		return nil, errors.New("dataCenterID must be between 0 and 31")
 	}
-	if machineId < 0 || machineId > MAX_MACHINE_ID {
-		return nil, errors.New("machineId must be between 0 and 31")
+	if machineID < 0 || machineID > MAX_MACHINE_ID {
+		return nil, errors.New("machineID must be between 0 and 31")
 	}
 
-	s := &SnowIdGenerator{
+	s := &SnowIDGenerator{
 		Records:      make(map[int64]int),
-		DataCenterId: int8(dataCenterId),
-		MachineId:    int8(machineId),
+		DataCenterID: int8(dataCenterID),
+		MachineID:    int8(machineID),
 		Epoch:        epoch,
 	}
 	return s, nil
@@ -85,18 +85,18 @@ func NewSnowIdGenerator(dataCenterId, machineId int, epoch time.Time) (*SnowIdGe
 //
 // Return error if the sequence number is equal to or greater than the max
 // sequence in 1 milisecond
-func (s *SnowIdGenerator) GenerateId() (*SnowID, error) {
+func (s *SnowIDGenerator) GenerateID() (*SnowID, error) {
 	currentTimestamp := time.Since(s.Epoch).Milliseconds()
 
-	return s.generateId(currentTimestamp)
+	return s.generateID(currentTimestamp)
 }
 
 // Generate ID with timestamp input
-func (s *SnowIdGenerator) generateId(timestamp int64) (*SnowID, error) {
+func (s *SnowIDGenerator) generateID(timestamp int64) (*SnowID, error) {
 	id := &SnowID{
 		Timestamp:    timestamp,
-		DataCenterId: s.DataCenterId,
-		MachineId:    s.MachineId,
+		DataCenterID: s.DataCenterID,
+		MachineID:    s.MachineID,
 		Epoch:        s.Epoch,
 	}
 	s.l.Lock()
@@ -122,7 +122,7 @@ func (s *SnowIdGenerator) generateId(timestamp int64) (*SnowID, error) {
 //
 // Runs a goroutine that resets the records every n seconds.
 // This is useful to avoid build up of records.
-func (s *SnowIdGenerator) AutoResetRecords(duration time.Duration) {
+func (s *SnowIDGenerator) AutoResetRecords(duration time.Duration) {
 	resetRecordsOnSchedule := func() {
 		// clean up every n second
 		ticker := time.NewTicker(duration)
@@ -136,7 +136,7 @@ func (s *SnowIdGenerator) AutoResetRecords(duration time.Duration) {
 }
 
 // Reset all hashtable records
-func (s *SnowIdGenerator) ResetRecords() {
+func (s *SnowIDGenerator) ResetRecords() {
 	s.l.Lock()
 	s.Records = make(map[int64]int)
 	s.l.Unlock()
@@ -144,18 +144,18 @@ func (s *SnowIdGenerator) ResetRecords() {
 
 // Return binary string of ID
 func (id *SnowID) StringBinary() string {
-	timestamp_bin := fmt.Sprintf("%041b", id.Timestamp)
-	dataCenterId_bin := fmt.Sprintf("%05b", id.DataCenterId)
-	machineId_bin := fmt.Sprintf("%05b", id.MachineId)
-	sequenceNumber_bin := fmt.Sprintf("%012b", id.SequenceNumber)
+	timestampBinStr := fmt.Sprintf("%041b", id.Timestamp)
+	dataCenterIDBinStr := fmt.Sprintf("%05b", id.DataCenterID)
+	machineIDBinStr := fmt.Sprintf("%05b", id.MachineID)
+	sequenceNumberBinStr := fmt.Sprintf("%012b", id.SequenceNumber)
 
-	return fmt.Sprintf("%s%s%s%s%s", DEFAULT_PLACEHOLDER_BIT, timestamp_bin, dataCenterId_bin, machineId_bin, sequenceNumber_bin)
+	return fmt.Sprintf("%s%s%s%s%s", DEFAULT_PLACEHOLDER_BIT, timestampBinStr, dataCenterIDBinStr, machineIDBinStr, sequenceNumberBinStr)
 }
 
 // return decimal integer of ID
 func (id *SnowID) Int64() int64 {
-	id_int, _ := strconv.ParseInt(id.StringBinary(), 2, 64)
-	return id_int
+	idInt, _ := strconv.ParseInt(id.StringBinary(), 2, 64)
+	return idInt
 }
 
 // Return decimal string of ID
@@ -171,68 +171,68 @@ func (id *SnowID) Datetime() time.Time {
 
 // Parse ID in decimal string
 //
-// eg. ParseId("0000001001011100001100001111001101011110100000100001000000000000")
-func ParseIdBinary(id string, customEpoch time.Time) (*SnowID, error) {
-	if len(id) != TOTAL_BIT {
+// eg. ParseID("0000001001011100001100001111001101011110100000100001000000000000")
+func ParseIDBinary(idStr string, customEpoch time.Time) (*SnowID, error) {
+	if len(idStr) != TOTAL_BIT {
 		return nil, errors.New("invalid ID length. The ID should be 64-bit binary string")
 	}
 	// get binary string
-	timestamp_start := 0 + PLACEHOLDER_BIT
-	datacenter_start := timestamp_start + TIMESTAMP_BIT
-	machine_start := datacenter_start + DATACENTER_BIT
-	sequence_start := machine_start + MACHINE_BIT
+	timestampStart := 0 + PLACEHOLDER_BIT
+	dataCenterStart := timestampStart + TIMESTAMP_BIT
+	machineStart := dataCenterStart + DATACENTER_BIT
+	sequenceStart := machineStart + MACHINE_BIT
 
-	timestamp := id[timestamp_start:datacenter_start]
-	datacenterId := id[datacenter_start:machine_start]
-	machineId := id[machine_start:sequence_start]
-	sequenceNumber := id[sequence_start:]
+	timestamp := idStr[timestampStart:dataCenterStart]
+	dataCenterID := idStr[dataCenterStart:machineStart]
+	machineID := idStr[machineStart:sequenceStart]
+	sequenceNumber := idStr[sequenceStart:]
 
 	// convert to integer
-	timestamp_int, err := strconv.ParseInt(timestamp, 2, 64)
+	timestampInt, err := strconv.ParseInt(timestamp, 2, 64)
 	if err != nil {
 		return nil, errors.New("invalid timestamp. The timestamp should be a number")
 	}
-	datacenterId_int, err := strconv.ParseInt(datacenterId, 2, 8)
+	dataCenterIDInt, err := strconv.ParseInt(dataCenterID, 2, 8)
 	if err != nil {
 		return nil, errors.New("datacenter id should be a number")
 	}
-	machineId_int, err := strconv.ParseInt(machineId, 2, 8)
+	machineIDInt, err := strconv.ParseInt(machineID, 2, 8)
 	if err != nil {
 		return nil, errors.New("machine id should be a number")
 	}
-	sequenceNumber_int, err := strconv.ParseInt(sequenceNumber, 2, 16)
+	sequenceNumberInt, err := strconv.ParseInt(sequenceNumber, 2, 16)
 	if err != nil {
 		return nil, errors.New("sequence number should be a number")
 	}
 
-	idObj := &SnowID{
-		Timestamp:      timestamp_int,
-		DataCenterId:   int8(datacenterId_int),
-		MachineId:      int8(machineId_int),
-		SequenceNumber: int16(sequenceNumber_int),
+	id := &SnowID{
+		Timestamp:      timestampInt,
+		DataCenterID:   int8(dataCenterIDInt),
+		MachineID:      int8(machineIDInt),
+		SequenceNumber: int16(sequenceNumberInt),
 		Epoch:          customEpoch,
 	}
 
-	return idObj, nil
+	return id, nil
 }
 
 // Parse ID in decimal string
 //
-// eg. ParseId("170064707754004481")
-func ParseId(id string, customEpoch time.Time) (*SnowID, error) {
-	id_int, err := strconv.Atoi(id)
+// eg. ParseID("170064707754004481")
+func ParseID(idStr string, customEpoch time.Time) (*SnowID, error) {
+	idInt, err := strconv.Atoi(idStr)
 	if err != nil {
-		return nil, errors.New("the id is not a number")
+		return nil, errors.New("the ID is not a number")
 	}
 
-	id_bin := fmt.Sprintf("%064b", id_int)
-	if len(id_bin) != TOTAL_BIT {
-		return nil, errors.New("invalid id length")
+	idBinStr := fmt.Sprintf("%064b", idInt)
+	if len(idBinStr) != TOTAL_BIT {
+		return nil, errors.New("invalid ID length")
 	}
-	idObj, err := ParseIdBinary(id_bin, customEpoch)
+	id, err := ParseIDBinary(idBinStr, customEpoch)
 	if err != nil {
 		return nil, err
 	}
 
-	return idObj, nil
+	return id, nil
 }

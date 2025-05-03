@@ -15,7 +15,7 @@ Structure of ID:
 - 0: Placeholder, could indicate the sign, remain for future use.
 - timestamp: unix timestamp in milliseconds. The default epoch is on 2025-01-01T00:00.000Z. 41 bit could have total of 2^41 = 2.2 Trillion milliseconds ~= 69.8 years. Max date could reach year 2095.
 - dataCenterID: 5 bits, max 32 data center (0 - 31)
-- machineId: 5 bits, max 32 machine (nodes) in 1 data center (0 - 31)
+- machineID: 5 bits, max 32 machine (nodes) in 1 data center (0 - 31)
 - sequenceNUmber: 12 bits, max 4096 sequence number per millisecond (0 - 4095)
 
 Example generated ID:
@@ -44,18 +44,18 @@ import (
 )
 
 func main() {
-	dataCenterId := 1            // 0 to 31
-	machineId := 1               // 0 to 31
+	dataCenterID := 1            // 0 to 31
+	machineID := 1               // 0 to 31
 	epoch := snowid.DefaultEpoch // Default epoch 2025-01-01T00:00.000Z
-	s, err := snowid.NewSnowIdGenerator(dataCenterId, machineId, epoch)
+	s, err := snowid.NewSnowIDGenerator(dataCenterID, machineID, epoch)
 	if err != nil {
 		panic(err)
 	}
-	id1, err := s.GenerateId()
+	id1, err := s.GenerateID()
 	if err != nil {
 		panic(err)
 	}
-	id2, err := s.GenerateId()
+	id2, err := s.GenerateID()
 	if err != nil {
 		panic(err)
 	}
@@ -71,8 +71,8 @@ func main() {
 
 	// Parse ID
 	id1Copy := id1.String()
-	reverseParseId1, _ := snowid.ParseId(id1Copy, snowid.DefaultEpoch)
-	fmt.Printf("ID: %s\n", reverseParseId1.String()) // same id as ID 1 after parsing, ie. 37866498659848192
+	reverseParseID1, _ := snowid.ParseID(id1Copy, snowid.DefaultEpoch)
+	fmt.Printf("ID: %s\n", reverseParseID1.String()) // same id as ID 1 after parsing, ie. 37866498659848192
 }
 ```
 

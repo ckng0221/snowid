@@ -7,18 +7,18 @@ import (
 )
 
 func main() {
-	dataCenterId := 1            // 0 to 31
-	machineId := 1               // 0 to 31
+	dataCenterID := 1            // 0 to 31
+	machineID := 1               // 0 to 31
 	epoch := snowid.DefaultEpoch // Default epoch 2025-01-01T00:00.000Z
-	s, err := snowid.NewSnowIdGenerator(dataCenterId, machineId, epoch)
+	s, err := snowid.NewSnowIDGenerator(dataCenterID, machineID, epoch)
 	if err != nil {
 		panic(err)
 	}
-	id1, err := s.GenerateId()
+	id1, err := s.GenerateID()
 	if err != nil {
 		panic(err)
 	}
-	id2, err := s.GenerateId()
+	id2, err := s.GenerateID()
 	if err != nil {
 		panic(err)
 	}
@@ -36,6 +36,6 @@ func main() {
 
 	// Parse ID
 	id1Copy := id1.String()
-	reverseParseId1, _ := snowid.ParseId(id1Copy, snowid.DefaultEpoch)
-	fmt.Printf("ID: %s\n", reverseParseId1.String()) // same id as ID 1 after parsing, ie. "37866498659848192"
+	reverseParseID1, _ := snowid.ParseID(id1Copy, snowid.DefaultEpoch)
+	fmt.Printf("ID: %s\n", reverseParseID1.String()) // same id as ID 1 after parsing, ie. "37866498659848192"
 }

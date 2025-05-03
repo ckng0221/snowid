@@ -21,20 +21,20 @@ func init() {
 }
 
 func main() {
-	dataCenterIdStr := os.Getenv("DATA_CENTER_ID")
-	machineIdStr := os.Getenv("MACHINE_ID")
+	dataCenterIDStr := os.Getenv("DATA_CENTER_ID")
+	machineIDStr := os.Getenv("MACHINE_ID")
 
-	dataCenterId, err := strconv.Atoi(dataCenterIdStr)
+	dataCenterID, err := strconv.Atoi(dataCenterIDStr)
 	if err != nil {
 		log.Fatalf("Invalid DATA_CENTER_ID: %v", err)
 	}
 
-	machineId, err := strconv.Atoi(machineIdStr)
+	machineID, err := strconv.Atoi(machineIDStr)
 	if err != nil {
 		log.Fatalf("Invalid MACHINE_ID: %v", err)
 	}
 
-	s, err := snowid.NewSnowIdGenerator(dataCenterId, machineId, snowid.DefaultEpoch)
+	s, err := snowid.NewSnowIDGenerator(dataCenterID, machineID, snowid.DefaultEpoch)
 	if err != nil {
 		log.Fatalf("Failed to Initiate SnowID generator: %v", err)
 	}
@@ -44,7 +44,7 @@ func main() {
 	})
 
 	http.HandleFunc("POST /ids", func(w http.ResponseWriter, r *http.Request) {
-		id, err := s.GenerateId()
+		id, err := s.GenerateID()
 		if err != nil {
 			log.Print(err.Error())
 			errMsg := "Internal server error"
@@ -66,10 +66,10 @@ func main() {
 
 	http.HandleFunc("GET /ids/{id}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		id := r.PathValue("id")
+		idStr := r.PathValue("id")
 
 		// Parse binary id
-		idObj, err := snowid.ParseId(id, snowid.DefaultEpoch)
+		id, err := snowid.ParseID(idStr, snowid.DefaultEpoch)
 		if err != nil {
 			log.Print(err.Error())
 			errMsg := "Internal server error"
@@ -83,9 +83,9 @@ func main() {
 
 		res := map[string]any{
 			"status":    200,
-			"data":      idObj,
-			"datetime":  idObj.Datetime().UTC().String(),
-			"id_binary": idObj.StringBinary(),
+			"data":      id,
+			"datetime":  id.Datetime().UTC().String(),
+			"id_binary": id.StringBinary(),
 		}
 		json.NewEncoder(w).Encode(res)
 	})
