@@ -1,3 +1,5 @@
+.PHONY: test_all
+
 test_all: test_unit test_build_basic test_build_server
 
 test_unit:

@@ -34,7 +34,7 @@ func main() {
 		log.Fatalf("Invalid MACHINE_ID: %v", err)
 	}
 
-	s, err := snowid.NewSnowIDGenerator(dataCenterID, machineID, snowid.DefaultEpoch)
+	s := snowid.NewSnowIDGenerator(dataCenterID, machineID, snowid.DefaultEpoch)
 	if err != nil {
 		log.Fatalf("Failed to Initiate SnowID generator: %v", err)
 	}

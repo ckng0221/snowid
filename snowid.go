@@ -63,13 +63,13 @@ type SnowID struct {
 // machineID. min 0, max 31
 //
 // epoch: The epoch time to start generating IDs. Could use the DefaultEpoch.
-func NewSnowIDGenerator(dataCenterID, machineID int, epoch time.Time) (*SnowIDGenerator, error) {
+func NewSnowIDGenerator(dataCenterID, machineID int, epoch time.Time) *SnowIDGenerator {
 	// validation
 	if dataCenterID < 0 || dataCenterID > MAX_DATACENTER_ID {
-		return nil, errors.New("dataCenterID must be between 0 and 31")
+		panic("dataCenterID must be between 0 and 31")
 	}
 	if machineID < 0 || machineID > MAX_MACHINE_ID {
-		return nil, errors.New("machineID must be between 0 and 31")
+		panic("machineID must be between 0 and 31")
 	}
 
 	s := &SnowIDGenerator{
@@ -78,7 +78,7 @@ func NewSnowIDGenerator(dataCenterID, machineID int, epoch time.Time) (*SnowIDGe
 		MachineID:    int8(machineID),
 		Epoch:        epoch,
 	}
-	return s, nil
+	return s
 }
 
 // Generate Snowflake ID object

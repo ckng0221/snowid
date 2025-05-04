@@ -10,10 +10,7 @@ func main() {
 	dataCenterID := 1            // 0 to 31
 	machineID := 1               // 0 to 31
 	epoch := snowid.DefaultEpoch // Default epoch 2025-01-01T00:00.000Z
-	s, err := snowid.NewSnowIDGenerator(dataCenterID, machineID, epoch)
-	if err != nil {
-		panic(err)
-	}
+	s := snowid.NewSnowIDGenerator(dataCenterID, machineID, epoch)
 	id1, err := s.GenerateID()
 	if err != nil {
 		panic(err)

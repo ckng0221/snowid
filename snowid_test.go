@@ -14,11 +14,7 @@ const (
 
 // Date
 func TestCustomEpochDateTimeDefaultEpoch(t *testing.T) {
-	s, err := NewSnowIDGenerator(machineID, dataCenterID, DefaultEpoch)
-	if err != nil {
-		t.Error(err.Error())
-		return
-	}
+	s := NewSnowIDGenerator(machineID, dataCenterID, DefaultEpoch)
 	id, err := s.GenerateID()
 	if err != nil {
 		t.Errorf("Failed to generate ID: %s", err.Error())
@@ -35,11 +31,7 @@ func TestCustomEpochDateTimeDefaultEpoch(t *testing.T) {
 
 func TestCustomEpochDateTimeEarlierEpoch(t *testing.T) {
 	earlierEpoch := time.Date(1950, 1, 1, 0, 0, 0, 0, time.UTC)
-	s, err := NewSnowIDGenerator(machineID, dataCenterID, earlierEpoch)
-	if err != nil {
-		t.Error(err.Error())
-		return
-	}
+	s := NewSnowIDGenerator(machineID, dataCenterID, earlierEpoch)
 	id, err := s.GenerateID()
 	if err != nil {
 		t.Errorf("Failed to generate ID: %s", err.Error())
@@ -56,10 +48,7 @@ func TestCustomEpochDateTimeEarlierEpoch(t *testing.T) {
 
 func TestCustomEpochDateTimeUnixEpoch(t *testing.T) {
 	unixEpoch := time.Unix(0, 0).UTC()
-	s, err := NewSnowIDGenerator(machineID, dataCenterID, unixEpoch)
-	if err != nil {
-		t.Error(err.Error())
-	}
+	s := NewSnowIDGenerator(machineID, dataCenterID, unixEpoch)
 	id, err := s.GenerateID()
 	if err != nil {
 		t.Errorf("Failed to generate ID: %s", err.Error())
@@ -166,10 +155,7 @@ func TestParseStringToBinaryString(t *testing.T) {
 }
 
 func TestGenerateIDEqualParseID(t *testing.T) {
-	s, err := NewSnowIDGenerator(dataCenterID, machineID, DefaultEpoch)
-	if err != nil {
-		t.Error(err.Error())
-	}
+	s := NewSnowIDGenerator(dataCenterID, machineID, DefaultEpoch)
 	id, err := s.GenerateID()
 	if err != nil {
 		t.Errorf("failed to generate ID")
@@ -190,10 +176,7 @@ func TestGenerateIDEqualParseID(t *testing.T) {
 
 // ID Generation
 func TestGenerateMany(t *testing.T) {
-	s, err := NewSnowIDGenerator(dataCenterID, machineID, DefaultEpoch)
-	if err != nil {
-		t.Error(err.Error())
-	}
+	s := NewSnowIDGenerator(dataCenterID, machineID, DefaultEpoch)
 	qty := 1000
 	ids := []*SnowID{}
 	for range qty {
@@ -210,10 +193,7 @@ func TestGenerateMany(t *testing.T) {
 }
 
 func TestGenerateExceedSequenceLimitIDCount(t *testing.T) {
-	s, err := NewSnowIDGenerator(dataCenterID, machineID, DefaultEpoch)
-	if err != nil {
-		t.Error(err.Error())
-	}
+	s := NewSnowIDGenerator(dataCenterID, machineID, DefaultEpoch)
 	ids := []*SnowID{}
 	timestamp := time.Now().UnixMilli()
 	for range SEQUENCE_CAP {
@@ -239,10 +219,7 @@ func TestGenerateExceedSequenceLimitIDCount(t *testing.T) {
 }
 
 func TestGenerateExceedSequenceLimitIDCountWithSleep(t *testing.T) {
-	s, err := NewSnowIDGenerator(dataCenterID, machineID, DefaultEpoch)
-	if err != nil {
-		t.Error(err.Error())
-	}
+	s := NewSnowIDGenerator(dataCenterID, machineID, DefaultEpoch)
 	ids := []*SnowID{}
 	for range SEQUENCE_CAP {
 		id, err := s.GenerateID()
