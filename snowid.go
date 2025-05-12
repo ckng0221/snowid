@@ -1,3 +1,11 @@
+// Package snowid generates unique 64-bit ID generator based on Twitter Snowflake.
+//
+// SnowID breakdown:
+// |0|timestamp|datacenterID|machineID|sequenceNumber
+// |1|41|5|5|12| bits
+//
+// 41 bit timestamp in miliseconds, can have max around 69 years
+// Use 2025-01-01 UTC as the starting epoch, instead of unix epoch, timestamp will be valid until year 2095
 package snowid
 
 import (
@@ -7,15 +15,6 @@ import (
 	"sync"
 	"time"
 )
-
-// Unique 64-bit ID generator based on Twitter Snowflake
-// ID generator
-// |0|timestamp|datacenterID|machineID|sequenceNumber
-// |1|41|5|5|12| bits
-
-// 41 bit timestamp in miliseconds, can have max around 69years
-// use 2025-01-01 UTC as the starting epoch, instead of unix epoch
-// max until year 2095
 
 const (
 	PLACEHOLDER_BIT = 1
@@ -56,7 +55,7 @@ type SnowID struct {
 	Epoch          time.Time `json:"epoch"`
 }
 
-// Initialize the ID Generator
+// NewSnowIDGenerator initializes the ID Generator.
 //
 // dataCenterID. min 0, max 31
 //
@@ -81,7 +80,7 @@ func NewSnowIDGenerator(dataCenterID, machineID int, epoch time.Time) *SnowIDGen
 	return s
 }
 
-// Generate Snowflake ID object
+// GenerateID generates Snowflake ID object.
 //
 // Return error if the sequence number is equal to or greater than the max
 // sequence in 1 milisecond
@@ -91,7 +90,7 @@ func (s *SnowIDGenerator) GenerateID() (*SnowID, error) {
 	return s.generateID(currentTimestamp)
 }
 
-// Generate ID with timestamp input
+// generateID generates ID with timestamp input.
 func (s *SnowIDGenerator) generateID(timestamp int64) (*SnowID, error) {
 	id := &SnowID{
 		Timestamp:    timestamp,
@@ -118,9 +117,9 @@ func (s *SnowIDGenerator) generateID(timestamp int64) (*SnowID, error) {
 	}
 }
 
-// AutoResetRecords will reset the records every n seconds
+// AutoResetRecords resets the records every n duration.
 //
-// Runs a goroutine that resets the records every n seconds.
+// Runs a goroutine that resets the records every n duration.
 // This is useful to avoid build up of records.
 func (s *SnowIDGenerator) AutoResetRecords(duration time.Duration) {
 	resetRecordsOnSchedule := func() {
@@ -135,14 +134,14 @@ func (s *SnowIDGenerator) AutoResetRecords(duration time.Duration) {
 	go resetRecordsOnSchedule()
 }
 
-// Reset all hashtable records
+// ResetRecords resets all hash table records.
 func (s *SnowIDGenerator) ResetRecords() {
 	s.l.Lock()
 	s.Records = make(map[int64]int)
 	s.l.Unlock()
 }
 
-// Return binary string of ID
+// StringBinary returns binary string of ID.
 func (id *SnowID) StringBinary() string {
 	timestampBinStr := fmt.Sprintf("%041b", id.Timestamp)
 	dataCenterIDBinStr := fmt.Sprintf("%05b", id.DataCenterID)
@@ -152,13 +151,13 @@ func (id *SnowID) StringBinary() string {
 	return fmt.Sprintf("%s%s%s%s%s", DEFAULT_PLACEHOLDER_BIT, timestampBinStr, dataCenterIDBinStr, machineIDBinStr, sequenceNumberBinStr)
 }
 
-// return decimal integer of ID
+// Int64 returns decimal integer of ID.
 func (id *SnowID) Int64() int64 {
 	idInt, _ := strconv.ParseInt(id.StringBinary(), 2, 64)
 	return idInt
 }
 
-// Return decimal string of ID
+// String returns decimal string of ID.
 func (id *SnowID) String() string {
 	return strconv.FormatInt(id.Int64(), 10)
 }
@@ -169,7 +168,7 @@ func (id *SnowID) Datetime() time.Time {
 	return time.UnixMilli(id.Timestamp + id.Epoch.UnixMilli() - unixEpoch.UnixMilli()).UTC()
 }
 
-// Parse ID in decimal string
+// ParseIDBinary parses ID in decimal string.
 //
 // eg. ParseID("0000001001011100001100001111001101011110100000100001000000000000")
 func ParseIDBinary(idStr string, customEpoch time.Time) (*SnowID, error) {
@@ -216,7 +215,7 @@ func ParseIDBinary(idStr string, customEpoch time.Time) (*SnowID, error) {
 	return id, nil
 }
 
-// Parse ID in decimal string
+// ParseID parses ID in decimal string.
 //
 // eg. ParseID("170064707754004481")
 func ParseID(idStr string, customEpoch time.Time) (*SnowID, error) {
